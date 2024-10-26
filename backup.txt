@@ -1,0 +1,199 @@
+-- Initialize the addon
+local addonName, addonTable = ...
+addonTable.inCombat = false
+addonTable.rotationEnabled = true -- Add a flag to enable/disable rotation
+
+-- Log function
+function addonTable.Log(message)
+    DEFAULT_CHAT_FRAME:AddMessage(date("%Y-%m-%d %H:%M:%S") .. " - " .. message)
+end
+
+-- Create the minimap button
+local minimapButton = CreateFrame("Button", "AllforOneMinimapButton", Minimap)
+minimapButton:SetSize(32, 32)
+minimapButton:SetFrameStrata("MEDIUM")
+minimapButton:SetFrameLevel(8)
+minimapButton:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
+
+local icon = minimapButton:CreateTexture(nil, "BACKGROUND")
+icon:SetTexture("Interface\\ICONS\\INV_Misc_QuestionMark")
+icon:SetSize(20, 20)
+icon:SetPoint("CENTER")
+
+local overlay = minimapButton:CreateTexture(nil, "OVERLAY")
+overlay:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
+overlay:SetSize(54, 54)
+overlay:SetPoint("TOPLEFT")
+
+minimapButton:SetScript("OnClick", function()
+    addonTable.rotationEnabled = not addonTable.rotationEnabled
+    local status = addonTable.rotationEnabled and "enabled" or "disabled"
+    print("Rotation " .. status)
+    addonTable.Log("Rotation " .. status)
+end)
+
+-- Position the minimap button
+local function UpdateMinimapButtonPosition()
+    local angle = math.rad(45) -- Adjust the angle as needed
+    local x = cos(angle) * 80
+    local y = sin(angle) * 80
+    minimapButton:SetPoint("CENTER", Minimap, "CENTER", x, y)
+end
+
+minimapButton:RegisterEvent("PLAYER_LOGIN")
+minimapButton:SetScript("OnEvent", function(self, event, ...)
+    if event == "PLAYER_LOGIN" then
+        UpdateMinimapButtonPosition()
+    end
+end)
+
+-- Define the HandleChatCommand function
+function addonTable.HandleChatCommand(msg)
+    if msg == "toggle" then
+        addonTable.rotationEnabled = not addonTable.rotationEnabled
+        local status = addonTable.rotationEnabled and "enabled" or "disabled"
+        print("Rotation " .. status)
+        addonTable.Log("Rotation " .. status)
+    else
+        addonTable.Log("Chat command received: " .. msg)
+        print("Chat command received: " .. msg)
+    end
+end
+
+-- Initialize the current rotation function
+local function InitializeRotationFunction()
+    local class = select(2, UnitClass("player"))
+    if GetSpecialization then
+        local spec = GetSpecialization()
+        if spec then
+            local specInfo = GetSpecializationInfo(spec)
+            if specInfo then
+                addonTable.currentRotationFunction = addonTable.GetRotationFunction[class] and addonTable.GetRotationFunction[class][specInfo]
+            else
+                addonTable.Log("Failed to get specialization info.")
+            end
+        else
+            addonTable.Log("Specialization not available yet.")
+        end
+    else
+        addonTable.Log("GetSpecialization function is not available.")
+    end
+end
+
+-- Create frame and register events
+addonTable.frame = CreateFrame("Frame")
+addonTable.frame:RegisterEvent("PLAYER_LOGIN")
+addonTable.frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+addonTable.frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+addonTable.frame:RegisterEvent("SPELLS_CHANGED")
+addonTable.frame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+addonTable.frame:RegisterEvent("PLAYER_LEVEL_UP")
+addonTable.frame:RegisterEvent("PLAYER_REGEN_DISABLED") -- Entering combat
+addonTable.frame:RegisterEvent("PLAYER_REGEN_ENABLED") -- Exiting combat
+
+-- Register chat command
+SLASH_ALLFORONE1 = "/allforone"
+SlashCmdList["ALLFORONE"] = function(msg)
+    addonTable.HandleChatCommand(msg) -- Call with addonTable prefix
+end
+
+-- Event handler function
+addonTable.frame:SetScript("OnEvent", function(self, event, ...)
+    if event == "PLAYER_LOGIN" then
+        print("AllforOne Addon Loaded")
+        addonTable.Log("Addon Loaded")
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        if not AllforOneConfig then
+            AllforOneConfig = { settings = { scaling = true, uiSize = 1.0, color = "white" } }
+        end
+        addonTable.config = AllforOneConfig
+        addonTable.Log("Player entered world.")
+        -- Ensure textBox and settingsButton are defined before showing them
+        if addonTable.textBox then addonTable.textBox:Show() end
+        if addonTable.settingsButton then addonTable.settingsButton:Show() end
+        C_Timer.After(1, function()
+            if GetSpecialization then
+                InitializeRotationFunction()
+            else
+                addonTable.Log("GetSpecialization not available, retrying...")
+                C_Timer.After(1, InitializeRotationFunction)
+            end
+        end)
+    elseif event == "PLAYER_LEVEL_UP" then
+        local level = ...
+        addonTable.ScaleUIBasedOnLevel(level)
+        addonTable.Log("Player leveled up to " .. level)
+    elseif event == "PLAYER_REGEN_DISABLED" then
+        addonTable.inCombat = true
+        addonTable.Log("Player entered combat.")
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        addonTable.inCombat = false
+        addonTable.Log("Player exited combat.")
+    elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
+        local timestamp, subevent, _, sourceGUID, sourceName, _, _, destGUID, destName, _, _, spellId, spellName = CombatLogGetCurrentEventInfo()
+        if subevent == "SPELL_CAST_SUCCESS" and sourceName == UnitName("player") then
+            print("You cast " .. spellName)
+            addonTable.Log("Spell cast: " .. spellName)
+        end
+    elseif event == "ACTIVE_TALENT_GROUP_CHANGED" then
+        print("Specialization changed")
+        addonTable.Log("Specialization changed")
+        -- Reinitialize rotation function based on new spec
+        C_Timer.After(1, function()
+            if GetSpecialization then
+                InitializeRotationFunction()
+            else
+                addonTable.Log("GetSpecialization not available, retrying...")
+                C_Timer.After(1, InitializeRotationFunction)
+            end
+        end)
+    else
+        addonTable.Log("Unhandled event: " .. event)
+    end
+end)
+
+-- Load rotation functions from separate files
+local function LoadRotationFunctions()
+    local classes = {"DEATHKNIGHT", "DEMONHUNTER", "DRUID", "HUNTER", "MAGE", "MONK", "PALADIN", "PRIEST", "ROGUE", "SHAMAN", "WARLOCK", "WARRIOR"}
+    for _, class in ipairs(classes) do
+        local rotationFile = "Interface\\AddOns\\" .. addonName .. "\\" .. class
+        local loaded, reason = LoadAddOn(rotationFile)
+        if not loaded then
+            print("Failed to load rotation file for " .. class .. ": " .. reason)
+        end
+    end
+end
+
+LoadRotationFunctions()
+
+-- Function to auto-cast spells
+local function AutoCastSpells()
+    if addonTable.rotationEnabled and addonTable.inCombat then
+        -- Example spell casting logic
+        if IsUsableSpell("SpellName") and GetSpellCooldown("SpellName") == 0 then
+            CastSpellByName("SpellName")
+        end
+    end
+end
+
+local function Rotation()
+    if not addonTable.rotationEnabled then
+        return -- Exit the function if rotation is disabled
+    end
+
+    if addonTable.currentRotationFunction then
+        addonTable.currentRotationFunction()
+    end
+
+    AutoCastSpells() -- Call the auto-cast function
+end
+
+-- Call the rotation function on a timer
+C_Timer.NewTicker(1, Rotation)
+
+-- Load the UI elements from a separate file
+local uiFile = "Interface\\AddOns\\" .. addonName .. "\\UI"
+local loaded, reason = LoadAddOn(uiFile)
+if not loaded then
+    print("Failed to load UI file: " .. reason)
+end

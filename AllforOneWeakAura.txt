@@ -1,0 +1,39 @@
+{
+  ["d"] = {
+    ["id"] = "AllforOneRotation",
+    ["desc"] = "Displays an icon when the rotation is enabled.",
+    ["icon"] = "Interface\\Icons\\Ability_Druid_Mangle",
+    ["trigger"] = {
+      {
+        ["type"] = "status",
+        ["events"] = {
+          "PLAYER_REGEN_DISABLED",
+          "PLAYER_REGEN_ENABLED"
+        },
+        ["conditions"] = {
+          {
+            ["type"] = "custom",
+            ["event"] = "PLAYER_REGEN_DISABLED",
+            ["custom"] = "function()\n  return _G[\"AllforOneAddon\"].rotationEnabled and _G[\"AllforOneAddon\"].inCombat\nend"
+          }
+        }
+      }
+    },
+    ["actions"] = {
+      ["start"] = {
+        ["message"] = "Rotation Enabled",
+        ["do_message"] = true
+      },
+      ["finish"] = {
+        ["message"] = "Rotation Disabled",
+        ["do_message"] = true
+      }
+    },
+    ["display"] = {
+      ["type"] = "icon",
+      ["icon"] = "Interface\\Icons\\Ability_Druid_Mangle",
+      ["color"] = {1, 0, 0, 1},
+      ["size"] = 50
+    }
+  }
+}
