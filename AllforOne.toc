@@ -1,0 +1,20 @@
+## Interface: 110002
+## Title: AllforOne
+## Notes: A World of Warcraft addon for automated rotation logic.
+## Author: Raiff
+## Version: 1.0.0
+
+AllforOne.lua
+UI.lua
+DEATHKNIGHT.lua
+DEMONHUNTER.lua
+DRUID.lua
+HUNTER.lua
+MAGE.lua
+MONK.lua
+PALADIN.lua
+PRIEST.lua
+ROGUE.lua
+SHAMAN.lua
+WARLOCK.lua
+WARRIOR.lua
