@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.0.3] - 2024-10-29
+### Added
+- Error handling for missing rotation files.
+- Defensive programming to ensure `uiColor` is properly initialized.
+- Slash command `/allforoneinfo` to display addon information.
+
+### Changed
+- Improved event handling for `GetSpecialization` function to handle cases where it might not be available.
+- Enhanced logging for better debugging and tracking of events.
+- Updated UI elements to ensure proper initialization and error handling.
+
+### Fixed
+- Fixed issue with `uiColor` being `nil` in the color picker callback.
+- Fixed multiple errors related to missing rotation files for various classes.
+- Fixed unhandled events causing errors during addon initialization.
+
 ## [1.0.2] - 2024-10-28
 ### Added
 - Command `/allforone settings` to open the settings panel.
