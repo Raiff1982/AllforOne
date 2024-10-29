@@ -7,6 +7,11 @@ addonTable.config = addonTable.config or {
     spellSequence = {"Vampiric Touch", "Devouring Plague", "Shadow Word: Pain", "Mind Blast"} -- Default spell sequence
 }
 
+-- Ensure all fields are initialized
+addonTable.config.uiSize = addonTable.config.uiSize or 1.0
+addonTable.config.uiColor = addonTable.config.uiColor or { r = 0, g = 0, b = 0, a = 0.8 }
+addonTable.config.spellSequence = addonTable.config.spellSequence or {"Vampiric Touch", "Devouring Plague", "Shadow Word: Pain", "Mind Blast"}
+
 -- Function to safely log messages
 local function SafeLog(message)
     if addonTable and addonTable.Log then
@@ -191,7 +196,7 @@ end)
 local function LoadRotationFunctions()
     local classes = {"DEATHKNIGHT", "DEMONHUNTER", "DRUID", "HUNTER", "MAGE", "MONK", "PALADIN", "PRIEST", "ROGUE", "SHAMAN", "WARLOCK", "WARRIOR", "EVOKER"}
     for _, class in ipairs(classes) do
-        local rotationFile = "Interface\\AddOns\\" .. addonName .. "\\" .. class
+        local rotationFile = "Interface\\AddOns\\" .. addonName .. "\\" .. class .. ".lua"
         local loaded, reason = LoadAddOn(rotationFile)
         if not loaded then
             SafeLog("Failed to load rotation file for " .. class .. ": " .. reason)
@@ -295,7 +300,7 @@ function addonTable:SpawnTutorialFrame()
     f.disableButton = CreateFrame('CheckButton', f:GetName()..'DisableButton', f, 'UICheckButtonTemplate')
     _G[f.disableButton:GetName() .. 'Text']:SetText(DISABLE)
     f.disableButton:SetPoint('BOTTOMLEFT')
-    f.disableButton:SetScript('OnShow', function(btn) btn:SetChecked(addonTable.db.hideTutorial) end)
+    f.disableButton:SetScript('OnShow', function(btn) btn:SetChecked(addonTable.db and addonTable.db.hideTutorial) end)
     f.disableButton:SetScript('OnClick', function(btn) addonTable.db.hideTutorial = btn:GetChecked() end)
 
     f.hideButton = CreateFrame('Button', f:GetName()..'HideButton', f, 'UIPanelButtonTemplate')
@@ -319,7 +324,7 @@ function addonTable:SpawnTutorialFrame()
 end
 
 function addonTable:ShowTutorial(forceShow)
-    if not forceShow and (addonTable.db.hideTutorial or not addonTable.private.install_complete) then return end
+    if not forceShow and (addonTable.db and addonTable.db.hideTutorial or not addonTable.private.install_complete) then return end
 
     AllforOneTutorialWindow = AllforOneTutorialWindow or addonTable:SpawnTutorialFrame()
     AllforOneTutorialWindow:Show()
