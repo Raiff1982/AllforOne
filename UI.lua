@@ -1,5 +1,12 @@
 local addonName, addonTable = ...
 
+-- Default settings
+addonTable.config = addonTable.config or {
+    uiSize = 1.0, -- Default size (1.0 means 100%)
+    uiColor = { r = 0, g = 0, b = 0, a = 0.8 }, -- Default color (black with 80% opacity)
+    spellSequence = {"Vampiric Touch", "Devouring Plague", "Shadow Word: Pain", "Mind Blast"} -- Default spell sequence
+}
+
 -- Function to safely log messages
 local function SafeLog(message)
     if addonTable and addonTable.Log then
@@ -19,8 +26,9 @@ mainFrame:SetBackdrop({
     tile = true, tileSize = 32, edgeSize = 32,
     insets = { left = 11, right = 12, top = 12, bottom = 11 }
 })
-mainFrame:SetBackdropColor(0, 0, 0, 0.8)
+mainFrame:SetBackdropColor(addonTable.config.uiColor.r, addonTable.config.uiColor.g, addonTable.config.uiColor.b, addonTable.config.uiColor.a)
 mainFrame:SetBackdropBorderColor(1, 0.8, 0, 1)
+mainFrame:SetScale(addonTable.config.uiSize)
 
 mainFrame:SetMovable(true)
 mainFrame:EnableMouse(true)
@@ -116,7 +124,7 @@ local uiSizeSlider = CreateFrame("Slider", "AllforOneUISizeSlider", addonTable.s
 uiSizeSlider:SetPoint("TOP", 0, -50)
 uiSizeSlider:SetMinMaxValues(0.5, 2.0)
 uiSizeSlider:SetValueStep(0.1)
-uiSizeSlider:SetValue(1.0)
+uiSizeSlider:SetValue(addonTable.config.uiSize)
 uiSizeSlider:SetWidth(200)
 _G[uiSizeSlider:GetName() .. 'Low']:SetText('0.5')
 _G[uiSizeSlider:GetName() .. 'High']:SetText('2.0')
@@ -142,16 +150,16 @@ colorPickerButton:SetScript("OnClick", function()
         else
             newA, newR, newG, newB = OpacitySliderFrame:GetValue(), ColorPickerFrame:GetColorRGB()
         end
-        addonTable.config.color = { newR, newG, newB, newA }
+        addonTable.config.uiColor = { r = newR, g = newG, b = newB, a = newA }
         mainFrame:SetBackdropColor(newR, newG, newB, newA)
         SafeLog("Color set to " .. newR .. ", " .. newG .. ", " .. newB .. ", " .. newA)
     end
 
     ColorPickerFrame.func, ColorPickerFrame.opacityFunc, ColorPickerFrame.cancelFunc = 
         ColorPickerCallback, ColorPickerCallback, ColorPickerCallback
-    ColorPickerFrame:SetColorRGB(unpack(addonTable.config.color))
-    ColorPickerFrame.hasOpacity, ColorPickerFrame.opacity = true, addonTable.config.color[4]
-    ColorPickerFrame.previousValues = { unpack(addonTable.config.color) }
+    ColorPickerFrame:SetColorRGB(addonTable.config.uiColor.r, addonTable.config.uiColor.g, addonTable.config.uiColor.b)
+    ColorPickerFrame.hasOpacity, ColorPickerFrame.opacity = true, addonTable.config.uiColor.a
+    ColorPickerFrame.previousValues = { addonTable.config.uiColor.r, addonTable.config.uiColor.g, addonTable.config.uiColor.b, addonTable.config.uiColor.a }
     ColorPickerFrame:Show()
 end)
 
@@ -329,3 +337,19 @@ end
 
 -- Register the tutorial command
 SlashCmdList["ALLFORONETUTORIAL"] = HandleTutorialCommand
+
+-- Define the new slash command for settings
+SLASH_ALLFORONESETTINGS1 = "/allforonesettings"
+
+-- Create the command handler for settings
+local function HandleSettingsCommand(msg)
+    if addonTable.settingsPanel then
+        addonTable.settingsPanel:Show()
+        SafeLog("Settings panel opened.")
+    else
+        SafeLog("Error: settingsPanel is nil.")
+    end
+end
+
+-- Register the settings command
+SlashCmdList["ALLFORONESETTINGS"] = HandleSettingsCommand

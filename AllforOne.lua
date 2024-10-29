@@ -4,6 +4,13 @@ _G["AllforOneAddon"] = addonTable -- Make addonTable globally accessible
 addonTable.inCombat = false
 addonTable.rotationEnabled = true -- Add a flag to enable/disable rotation
 
+-- Default settings
+addonTable.config = addonTable.config or {
+    uiSize = 1.0, -- Default size (1.0 means 100%)
+    uiColor = { r = 0, g = 0, b = 0, a = 0.8 }, -- Default color (black with 80% opacity)
+    spellSequence = {"Vampiric Touch", "Devouring Plague", "Shadow Word: Pain", "Mind Blast"} -- Default spell sequence
+}
+
 -- Log function with error handling
 local function SafeLog(message)
     if DEFAULT_CHAT_FRAME then
@@ -359,6 +366,22 @@ end
 
 -- Register the tutorial command
 SlashCmdList["ALLFORONETUTORIAL"] = HandleTutorialCommand
+
+-- Define the new slash command for settings
+SLASH_ALLFORONESETTINGS1 = "/allforonesettings"
+
+-- Create the command handler for settings
+local function HandleSettingsCommand(msg)
+    if addonTable.settingsPanel then
+        addonTable.settingsPanel:Show()
+        SafeLog("Settings panel opened.")
+    else
+        SafeLog("Error: settingsPanel is nil.")
+    end
+end
+
+-- Register the settings command
+SlashCmdList["ALLFORONESETTINGS"] = HandleSettingsCommand
 
 -- Create a macro for toggling rotation
 local function CreateToggleMacro()
