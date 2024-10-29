@@ -305,6 +305,12 @@ end
 
 LoadRotationFunctions()
 
+-- Function to check if the global cooldown is active
+local function IsGlobalCooldownActive()
+    local start, duration = GetSpellCooldown(61304) -- 61304 is the spell ID for the global cooldown
+    return duration > 0 and (start + duration - GetTime()) > 0
+end
+
 -- Function to suggest spells
 local function SuggestSpells()
     if addonTable.rotationEnabled and addonTable.inCombat then
@@ -318,6 +324,10 @@ end
 local function Rotation()
     if not addonTable.rotationEnabled then
         return -- Exit the function if rotation is disabled
+    end
+
+    if IsGlobalCooldownActive() then
+        return -- Exit the function if the global cooldown is active
     end
 
     if addonTable.currentRotationFunction then
