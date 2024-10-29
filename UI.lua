@@ -121,7 +121,7 @@ end)
 
 -- Function to load rotation functions
 local function LoadRotationFunctions()
-    local classes = {"DEATHKNIGHT", "DEMONHUNTER", "DRUID", "HUNTER", "MAGE", "MONK", "PALADIN", "PRIEST", "ROGUE", "SHAMAN", "WARLOCK", "WARRIOR"}
+    local classes = {"DEATHKNIGHT", "DEMONHUNTER", "DRUID", "HUNTER", "MAGE", "MONK", "PALADIN", "PRIEST", "ROGUE", "SHAMAN", "WARLOCK", "WARRIOR", "EVOKER"}
     for _, class in ipairs(classes) do
         local rotationFile = "Interface\\AddOns\\" .. addonName .. "\\" .. class
         local loaded, reason = LoadAddOn(rotationFile)

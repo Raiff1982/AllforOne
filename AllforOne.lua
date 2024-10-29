@@ -61,14 +61,22 @@ end)
 
 -- Define the HandleChatCommand function
 function addonTable.HandleChatCommand(msg)
-    if msg == "toggle" then
+    local command, arg = strsplit(" ", msg, 2)
+    if command == "toggle" then
         addonTable.rotationEnabled = not addonTable.rotationEnabled
         local status = addonTable.rotationEnabled and "enabled" or "disabled"
         print("Rotation " .. status)
         SafeLog("Rotation " .. status)
+    elseif command == "settings" then
+        if addonTable.settingsPanel then
+            addonTable.settingsPanel:Show()
+            SafeLog("Settings panel opened.")
+        else
+            SafeLog("Error: settingsPanel is nil.")
+        end
     else
-        SafeLog("Chat command received: " .. msg)
-        print("Chat command received: " .. msg)
+        SafeLog("Unknown command: " .. command)
+        print("Unknown command: " .. command)
     end
 end
 
@@ -171,7 +179,7 @@ end)
 
 -- Load rotation functions from separate files
 local function LoadRotationFunctions()
-    local classes = {"DEATHKNIGHT", "DEMONHUNTER", "DRUID", "HUNTER", "MAGE", "MONK", "PALADIN", "PRIEST", "ROGUE", "SHAMAN", "WARLOCK", "WARRIOR"}
+    local classes = {"DEATHKNIGHT", "DEMONHUNTER", "DRUID", "HUNTER", "MAGE", "MONK", "PALADIN", "PRIEST", "ROGUE", "SHAMAN", "WARLOCK", "WARRIOR", "EVOKER"}
     for _, class in ipairs(classes) do
         local rotationFile = "Interface\\AddOns\\" .. addonName .. "\\" .. class
         local loaded, reason = LoadAddOn(rotationFile)
@@ -218,3 +226,39 @@ local function LoadUIElements()
 end
 
 LoadUIElements()
+
+-- Define the new slash command
+SLASH_ALLFORONEINFO1 = "/allforoneinfo"
+
+-- Create the command handler
+local function HandleInfoCommand(msg)
+    print("AllforOne Addon Information:")
+    print("Version: 1.0")
+    print("Author: Raiff")
+    SafeLog("Info command executed.")
+end
+
+-- Register the command
+SlashCmdList["ALLFORONEINFO"] = HandleInfoCommand
+
+-- Create a macro for toggling rotation
+local function CreateToggleMacro()
+    local macroName = "ToggleRotation"
+    local macroIcon = "INV_Misc_QuestionMark"
+    local macroBody = "/allforone toggle"
+
+    -- Check if the macro already exists
+    for i = 1, MAX_ACCOUNT_MACROS do
+        local name = GetMacroInfo(i)
+        if name == macroName then
+            return -- Macro already exists, no need to create it
+        end
+    end
+
+    -- Create the macro
+    CreateMacro(macroName, macroIcon, macroBody, nil)
+    SafeLog("Macro created: " .. macroName)
+end
+
+-- Create the macro on addon load
+CreateToggleMacro()
