@@ -2,7 +2,7 @@
 ## Title: AllforOne
 ## Notes: A World of Warcraft addon for automated rotation logic.
 ## Author: Raiff
-## Version: 1.0.0
+## Version: 1.0.2
 
 AllforOne.lua
 UI.lua
@@ -18,3 +18,4 @@ ROGUE.lua
 SHAMAN.lua
 WARLOCK.lua
 WARRIOR.lua
+EVOKER.lua
