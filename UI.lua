@@ -152,3 +152,120 @@ end
 -- Example usage of SuggestSkillSequence
 local skillSequence = {"Vampiric Touch", "Devouring Plague", "Shadow Word: Pain", "Mind Blast"}
 SuggestSkillSequence(skillSequence)
+
+-- Define tutorial messages
+local tutorialMessages = {
+    "Welcome to AllforOne! This addon helps you with automated rotation logic for all classes and specializations.",
+    "To toggle the rotation on or off, click the minimap button or use the command /allforone toggle.",
+    "You can open the settings panel by using the command /allforone settings.",
+    "The settings panel allows you to adjust the UI size, color, and customize spell sequences.",
+    "A macro for toggling rotation has been created automatically. You can find it in your macros list.",
+    "For more information, use the command /allforoneinfo."
+}
+
+-- Function to show the tutorial
+function addonTable:SetNextTutorial()
+    addonTable.currentTutorial = addonTable.currentTutorial or 0
+    addonTable.currentTutorial = addonTable.currentTutorial + 1
+
+    if addonTable.currentTutorial > #tutorialMessages then
+        addonTable.currentTutorial = 1
+    end
+
+    AllforOneTutorialWindow.desc:SetText(tutorialMessages[addonTable.currentTutorial])
+end
+
+function addonTable:SetPrevTutorial()
+    addonTable.currentTutorial = addonTable.currentTutorial or 0
+    addonTable.currentTutorial = addonTable.currentTutorial - 1
+
+    if addonTable.currentTutorial <= 0 then
+        addonTable.currentTutorial = #tutorialMessages
+    end
+
+    AllforOneTutorialWindow.desc:SetText(tutorialMessages[addonTable.currentTutorial])
+end
+
+function addonTable:SpawnTutorialFrame()
+    local f = CreateFrame('Frame', 'AllforOneTutorialWindow', UIParent)
+    f:SetFrameStrata('DIALOG')
+    f:SetToplevel(true)
+    f:SetClampedToScreen(true)
+    f:SetSize(360, 110)
+    f:SetBackdrop({
+        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark",
+        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Border",
+        tile = true, tileSize = 32, edgeSize = 32,
+        insets = { left = 11, right = 12, top = 12, bottom = 11 }
+    })
+    f:Hide()
+
+    local header = CreateFrame('Button', nil, f)
+    header:SetBackdrop({
+        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark",
+        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Border",
+        tile = true, tileSize = 32, edgeSize = 32,
+        insets = { left = 11, right = 12, top = 12, bottom = 11 }
+    })
+    header:SetSize(120, 25)
+    header:SetPoint('CENTER', f, 'TOP')
+    header:SetFrameLevel(header:GetFrameLevel() + 2)
+
+    local title = header:CreateFontString(nil, 'OVERLAY')
+    title:SetFontObject('GameFontHighlightLarge')
+    title:SetPoint('CENTER', header, 'CENTER')
+    title:SetText('AllforOne')
+
+    local desc = f:CreateFontString(nil, 'ARTWORK')
+    desc:SetFontObject('GameFontHighlight')
+    desc:SetJustifyV('TOP')
+    desc:SetJustifyH('LEFT')
+    desc:SetPoint('TOPLEFT', 18, -32)
+    desc:SetPoint('BOTTOMRIGHT', -18, 30)
+    f.desc = desc
+
+    f.disableButton = CreateFrame('CheckButton', f:GetName()..'DisableButton', f, 'UICheckButtonTemplate')
+    _G[f.disableButton:GetName() .. 'Text']:SetText(DISABLE)
+    f.disableButton:SetPoint('BOTTOMLEFT')
+    f.disableButton:SetScript('OnShow', function(btn) btn:SetChecked(addonTable.db.hideTutorial) end)
+    f.disableButton:SetScript('OnClick', function(btn) addonTable.db.hideTutorial = btn:GetChecked() end)
+
+    f.hideButton = CreateFrame('Button', f:GetName()..'HideButton', f, 'UIPanelButtonTemplate')
+    f.hideButton:SetPoint('BOTTOMRIGHT', -5, 5)
+    f.hideButton:SetText(HIDE)
+    f.hideButton:SetScript('OnClick', function(btn) btn:GetParent():Hide() end)
+
+    f.nextButton = CreateFrame('Button', f:GetName()..'NextButton', f, 'UIPanelButtonTemplate')
+    f.nextButton:SetPoint('RIGHT', f.hideButton, 'LEFT', -4, 0)
+    f.nextButton:SetSize(20, 20)
+    f.nextButton:SetText('>')
+    f.nextButton:SetScript('OnClick', function() addonTable:SetNextTutorial() end)
+
+    f.prevButton = CreateFrame('Button', f:GetName()..'PrevButton', f, 'UIPanelButtonTemplate')
+    f.prevButton:SetPoint('RIGHT', f.nextButton, 'LEFT', -4, 0)
+    f.prevButton:SetSize(20, 20)
+    f.prevButton:SetText('<')
+    f.prevButton:SetScript('OnClick', function() addonTable:SetPrevTutorial() end)
+
+    return f
+end
+
+function addonTable:ShowTutorial(forceShow)
+    if not forceShow and (addonTable.db.hideTutorial or not addonTable.private.install_complete) then return end
+
+    AllforOneTutorialWindow = AllforOneTutorialWindow or addonTable:SpawnTutorialFrame()
+    AllforOneTutorialWindow:Show()
+    addonTable:SetNextTutorial()
+end
+
+-- Define the new slash command for the tutorial
+SLASH_ALLFORONETUTORIAL1 = "/allforonetutorial"
+
+-- Create the command handler for the tutorial
+local function HandleTutorialCommand(msg)
+    addonTable:ShowTutorial(true)
+    SafeLog("Tutorial command executed.")
+end
+
+-- Register the tutorial command
+SlashCmdList["ALLFORONETUTORIAL"] = HandleTutorialCommand
