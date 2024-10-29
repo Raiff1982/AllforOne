@@ -111,6 +111,66 @@ addonTable.settingsPanel.title:SetFontObject("GameFontHighlightLarge")
 addonTable.settingsPanel.title:SetPoint("TOP", 0, -10)
 addonTable.settingsPanel.title:SetText("Settings Panel")
 
+-- Create UI size slider
+local uiSizeSlider = CreateFrame("Slider", "AllforOneUISizeSlider", addonTable.settingsPanel, "OptionsSliderTemplate")
+uiSizeSlider:SetPoint("TOP", 0, -50)
+uiSizeSlider:SetMinMaxValues(0.5, 2.0)
+uiSizeSlider:SetValueStep(0.1)
+uiSizeSlider:SetValue(1.0)
+uiSizeSlider:SetWidth(200)
+_G[uiSizeSlider:GetName() .. 'Low']:SetText('0.5')
+_G[uiSizeSlider:GetName() .. 'High']:SetText('2.0')
+_G[uiSizeSlider:GetName() .. 'Text']:SetText('UI Size')
+
+uiSizeSlider:SetScript("OnValueChanged", function(self, value)
+    addonTable.config.uiSize = value
+    mainFrame:SetScale(value)
+    SafeLog("UI size set to " .. value)
+end)
+
+-- Create color picker
+local colorPickerButton = CreateFrame("Button", "AllforOneColorPickerButton", addonTable.settingsPanel, "UIPanelButtonTemplate")
+colorPickerButton:SetPoint("TOP", uiSizeSlider, "BOTTOM", 0, -20)
+colorPickerButton:SetSize(100, 30)
+colorPickerButton:SetText("Pick Color")
+
+colorPickerButton:SetScript("OnClick", function()
+    local function ColorPickerCallback(restore)
+        local newR, newG, newB, newA
+        if restore then
+            newR, newG, newB, newA = unpack(restore)
+        else
+            newA, newR, newG, newB = OpacitySliderFrame:GetValue(), ColorPickerFrame:GetColorRGB()
+        end
+        addonTable.config.color = { newR, newG, newB, newA }
+        mainFrame:SetBackdropColor(newR, newG, newB, newA)
+        SafeLog("Color set to " .. newR .. ", " .. newG .. ", " .. newB .. ", " .. newA)
+    end
+
+    ColorPickerFrame.func, ColorPickerFrame.opacityFunc, ColorPickerFrame.cancelFunc = 
+        ColorPickerCallback, ColorPickerCallback, ColorPickerCallback
+    ColorPickerFrame:SetColorRGB(unpack(addonTable.config.color))
+    ColorPickerFrame.hasOpacity, ColorPickerFrame.opacity = true, addonTable.config.color[4]
+    ColorPickerFrame.previousValues = { unpack(addonTable.config.color) }
+    ColorPickerFrame:Show()
+end)
+
+-- Create spell sequence input box
+local spellSequenceInput = CreateFrame("EditBox", "AllforOneSpellSequenceInput", addonTable.settingsPanel, "InputBoxTemplate")
+spellSequenceInput:SetSize(200, 20)
+spellSequenceInput:SetPoint("TOP", colorPickerButton, "BOTTOM", 0, -20)
+spellSequenceInput:SetAutoFocus(false)
+spellSequenceInput:SetMultiLine(false)
+spellSequenceInput:SetText(table.concat(addonTable.config.spellSequence, ", "))
+
+spellSequenceInput:SetScript("OnEnterPressed", function(self)
+    local text = self:GetText()
+    local sequence = { strsplit(", ", text) }
+    addonTable.config.spellSequence = sequence
+    SafeLog("Spell sequence set to " .. text)
+    self:ClearFocus()
+end)
+
 -- Show the frame when the addon is loaded
 mainFrame:RegisterEvent("PLAYER_LOGIN")
 mainFrame:SetScript("OnEvent", function(self, event, ...)
